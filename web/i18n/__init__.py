@@ -77,7 +77,7 @@ def tr(key: str, fallback: Optional[str] = None, **kwargs) -> str:
     
     Example:
         tr("app.title")  # => "Pixelle-Video"
-        tr("error.missing_field", field="API Key")  # => "请填写 API Key"
+        tr("error.missing_field", field="API Key")  # => "Please enter API Key"
     """
     locale = _locales.get(_current_language, {})
     translations = locale.get("t", {})

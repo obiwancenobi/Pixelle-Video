@@ -9,11 +9,11 @@ import logging
 
 class ImageProcessor:
     """
-    图片处理和上传集合类
-    支持：图片处理、分割、拼接，以及上传到阿里云OSS
+    Image processing and upload utility class.
+    Supports: image processing, splitting, stitching, and uploading to Alibaba Cloud OSS.
     """
-    
-    # 阿里云DashScope上传配置
+
+    # Alibaba Cloud DashScope upload configuration
     UPLOAD_API_URL = "https://dashscope.aliyuncs.com/api/v1/uploads"
     
     def __init__(self,
@@ -22,14 +22,14 @@ class ImageProcessor:
                  model_name: str = "wan2.6-i2v-flash",
                  local_proxy: str | None = None):
         """
-        初始化图片处理器
-        
+        Initialize the image processor.
+
         Args:
-            image_path: 图片文件路径（可选，用于处理已有图片）
-            api_key: DashScope API Key（用于上传，可从环境变量 DASHSCOPE_API_KEY 读取）
-            model_name: 模型名称，默认使用 wan2.6-i2v-flash
+            image_path: Image file path (optional, used to process an existing image)
+            api_key: DashScope API Key (used for uploads; can be read from the DASHSCOPE_API_KEY environment variable)
+            model_name: Model name, defaults to wan2.6-i2v-flash
         """
-        # 图片处理部分
+        # Image processing section
         if image_path != '':
             self.image_path = image_path
             self.image = Image.open(image_path)
@@ -42,7 +42,7 @@ class ImageProcessor:
             self.width = None
             self.height = None
         
-        # 上传功能部分
+        # Upload functionality section
         self.api_key = api_key or os.getenv("DASHSCOPE_API_KEY")
         self.model_name = model_name
         self.local_proxy = local_proxy
@@ -54,13 +54,13 @@ class ImageProcessor:
 
     @staticmethod
     def check_column_white(column_pixels):
-        """检查列是否几乎全白"""
+        """Check whether a column is almost entirely white."""
         is_almost_white = np.logical_or(column_pixels == 254, column_pixels == 255)
         white_pixels_ratio = np.mean(np.all(is_almost_white, axis=-1))
-        return white_pixels_ratio >= 0.98  # 至少98%的像素为白色
+        return white_pixels_ratio >= 0.98  # At least 98% of pixels are white
 
     def find_white_section(self, start, end):
-        """查找指定范围内的白色区间"""
+        """Find white sections within the specified range."""
         white_sections = []
         in_white_section = False
         start_index = 0
@@ -82,7 +82,7 @@ class ImageProcessor:
         return white_sections
 
     def split_image(self):
-        """将图片从中间分割为左右两部分"""
+        """Split the image down the middle into left and right halves."""
         start_col = self.width * 2 // 5
         end_col = self.width * 3 // 5
         white_sections = self.find_white_section(start_col, end_col)
@@ -109,7 +109,7 @@ class ImageProcessor:
         return left_image_path, right_image_path
     
     def stitch_images(self, image_paths, output_path):
-        """拼接多张图片"""
+        """Stitch multiple images together."""
         if not image_paths:
             raise ValueError("No image paths provided")
         sample_image = Image.open(image_paths[0])
@@ -139,12 +139,12 @@ class ImageProcessor:
     
     def download_image(self, image_url, save_path, max_retries=3):
         """
-        下载图片，带有重试机制和SSL错误处理
-        
+        Download an image with a retry mechanism and SSL error handling.
+
         Args:
-            image_url: 图片URL
-            save_path: 本地保存路径
-            max_retries: 最大重试次数
+            image_url: Image URL
+            save_path: Local save path
+            max_retries: Maximum number of retries
         """
         import time
         import urllib3
@@ -169,19 +169,19 @@ class ImageProcessor:
                         for chunk in response.iter_content(chunk_size=8192):
                             if chunk:
                                 file.write(chunk)
-                    print(f"✓ 图片下载成功: {save_path}")
+                    print(f"✓ Image downloaded successfully: {save_path}")
                     return True
                 else:
-                    print(f"下载失败，状态码: {response.status_code}")
-                    
+                    print(f"Download failed, status code: {response.status_code}")
+
             except requests.exceptions.SSLError as e:
-                print(f"SSL错误 (尝试 {attempt + 1}/{max_retries}): {str(e)[:100]}")
+                print(f"SSL error (attempt {attempt + 1}/{max_retries}): {str(e)[:100]}")
                 if attempt < max_retries - 1:
                     wait_time = (attempt + 1) * 2
-                    print(f"等待 {wait_time} 秒后重试...")
+                    print(f"Waiting {wait_time} seconds before retrying...")
                     time.sleep(wait_time)
                 else:
-                    print("尝试禁用SSL验证重新下载...")
+                    print("Retrying download with SSL verification disabled...")
                     try:
                         response = requests.get(
                             image_url, 
@@ -198,21 +198,21 @@ class ImageProcessor:
                                 for chunk in response.iter_content(chunk_size=8192):
                                     if chunk:
                                         file.write(chunk)
-                            print(f"✓ 图片下载成功(已禁用SSL验证): {save_path}")
+                            print(f"✓ Image downloaded successfully (SSL verification disabled): {save_path}")
                             return True
                     except Exception as fallback_error:
-                        print(f"禁用SSL验证后仍然失败: {fallback_error}")
+                        print(f"Still failed after disabling SSL verification: {fallback_error}")
                         raise
-                        
+
             except requests.exceptions.Timeout as e:
-                print(f"超时错误 (尝试 {attempt + 1}/{max_retries}): {e}")
+                print(f"Timeout error (attempt {attempt + 1}/{max_retries}): {e}")
                 if attempt < max_retries - 1:
                     time.sleep((attempt + 1) * 2)
                 else:
                     raise
                     
             except Exception as e:
-                print(f"下载错误 (尝试 {attempt + 1}/{max_retries}): {e}")
+                print(f"Download error (attempt {attempt + 1}/{max_retries}): {e}")
                 if attempt < max_retries - 1:
                     time.sleep((attempt + 1) * 2)
                 else:
@@ -221,7 +221,7 @@ class ImageProcessor:
         return False
 
     def resize_image(self, image_path):
-        """调整图片大小（添加顶部空白）"""
+        """Resize the image (add blank space at the top)."""
         original_image = Image.open(image_path)
         width, height = original_image.size
         top_blank_height = height // 2
@@ -235,7 +235,7 @@ class ImageProcessor:
         return image_path
 
     def has_black_borders(self, image_path, threshold=10, black_limit=20):
-        """检查图片是否有黑色边框"""
+        """Check whether the image has black borders."""
         img = Image.open(image_path)
         pixels = img.load()
         width, height = img.size
@@ -243,14 +243,14 @@ class ImageProcessor:
         def is_black_pixel(pixel):
             return all(x <= black_limit for x in pixel)
         
-        # 检查顶部和底部边框
+        # Check the top and bottom borders
         for y in range(threshold):
             if all(is_black_pixel(pixels[x, y]) for x in range(width)):
                 return True
             if all(is_black_pixel(pixels[x, height - 1 - y]) for x in range(width)):
                 return True
         
-        # 检查左右边框
+        # Check the left and right borders
         for x in range(threshold):
             if all(is_black_pixel(pixels[x, y]) for y in range(height)):
                 return True
@@ -259,20 +259,20 @@ class ImageProcessor:
         
         return False
 
-    # ===== 图片上传功能 =====
-    
+    # ===== Image upload functionality =====
+
     def get_upload_policy(self):
         """
-        获取文件上传凭证
-        
+        Get the file upload credentials.
+
         Returns:
-            policy_data: 包含上传所需凭证的字典
-            
+            policy_data: A dictionary containing the credentials required for uploading
+
         Raises:
-            Exception: 获取上传凭证失败时
+            Exception: When obtaining the upload credentials fails
         """
         if not self.api_key:
-            raise RuntimeError("DASHSCOPE_API_KEY 未设置，无法使用图片上传服务")
+            raise RuntimeError("DASHSCOPE_API_KEY is not set; cannot use the image upload service")
         
         headers = {
             "Authorization": f"Bearer {self.api_key}",
@@ -296,17 +296,17 @@ class ImageProcessor:
     
     def upload_file_to_oss(self, policy_data: dict, file_path: str) -> str:
         """
-        将文件上传到临时存储OSS
-        
+        Upload the file to temporary OSS storage.
+
         Args:
-            policy_data: 上传凭证数据
-            file_path: 本地文件路径
-            
+            policy_data: Upload credential data
+            file_path: Local file path
+
         Returns:
-            oss_url: OSS URL (格式: oss://...)
-            
+            oss_url: OSS URL (format: oss://...)
+
         Raises:
-            Exception: 上传失败时
+            Exception: When the upload fails
         """
         file_name = Path(file_path).name
         # Sanitize filename for upload to avoid issues with spaces/characters
@@ -352,47 +352,47 @@ class ImageProcessor:
     
     def upload(self, file_path: str) -> str:
         """
-        上传文件到阿里云OSS并获取URL（统一接口方法）
-        
+        Upload a file to Alibaba Cloud OSS and get its URL (unified interface method).
+
         Args:
-            file_path: 本地文件路径
-            
+            file_path: Local file path
+
         Returns:
-            oss_url: OSS URL，可在48小时内使用
-            
+            oss_url: OSS URL, usable for 48 hours
+
         Raises:
-            FileNotFoundError: 文件不存在时
-            RuntimeError: API Key未设置时
-            Exception: 上传失败时
+            FileNotFoundError: When the file does not exist
+            RuntimeError: When the API Key is not set
+            Exception: When the upload fails
         """
-        # 检查文件是否存在
+        # Check whether the file exists
         if not os.path.exists(file_path):
-            raise FileNotFoundError(f"文件不存在: {file_path}")
-        
+            raise FileNotFoundError(f"File does not exist: {file_path}")
+
         if not self.api_key:
-            raise RuntimeError("DASHSCOPE_API_KEY 未设置，无法使用图片上传服务")
-        
-        # 1. 获取上传凭证（注意：上传凭证接口有限流）
+            raise RuntimeError("DASHSCOPE_API_KEY is not set; cannot use the image upload service")
+
+        # 1. Get the upload credentials (note: the upload credential endpoint is rate-limited)
         policy_data = self.get_upload_policy()
-        
-        # 2. 上传文件到OSS
+
+        # 2. Upload the file to OSS
         oss_url = self.upload_file_to_oss(policy_data, file_path)
-        
-        # 3. 计算过期时间
+
+        # 3. Compute the expiration time
         expire_time = datetime.now() + timedelta(hours=48)
-        
-        logging.info(f"文件上传成功: {file_path}")
+
+        logging.info(f"File uploaded successfully: {file_path}")
         logging.info(f"  OSS URL: {oss_url}")
-        logging.info(f"  过期时间: {expire_time.strftime('%Y-%m-%d %H:%M:%S')} (48小时)")
+        logging.info(f"  Expiration time: {expire_time.strftime('%Y-%m-%d %H:%M:%S')} (48 hours)")
         
         return oss_url
 
     def collage_images(self, image_paths, output_path):
         """
-        拼图功能：将多张图片水平拼接
+        Collage functionality: stitch multiple images horizontally.
         Args:
-            image_paths: 图片路径列表
-            output_path: 输出文件路径
+            image_paths: List of image paths
+            output_path: Output file path
         """
         if not image_paths:
             return None
@@ -408,7 +408,7 @@ class ImageProcessor:
         if not images:
             return None
 
-        # 统一高度，按第一张图片的高度调整其他图片
+        # Normalize height: resize the other images to match the first image's height
         base_height = images[0].height
         resized_images = []
         for img in images:

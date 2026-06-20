@@ -1,7 +1,7 @@
 """
-通义万象（Wan）视频生成客户端
-基于 DashScope SDK (dashscope.VideoSynthesis)
-支持 wan2.7-i2v, wan2.6-i2v-flash 等模型的图生视频功能
+Tongyi Wanxiang (Wan) video generation client
+Based on the DashScope SDK (dashscope.VideoSynthesis)
+Supports image-to-video generation for models like wan2.7-i2v, wan2.6-i2v-flash, etc.
 """
 
 import os
@@ -28,8 +28,8 @@ class DashscopeVideoClient:
     """
     _proxy_env_lock = threading.Lock()
 
-    阿里云通义万象视频生成客户端
-    使用 dashscope SDK 的 VideoSynthesis 接口
+    Alibaba Cloud Tongyi Wanxiang video generation client
+    Uses the VideoSynthesis interface of the dashscope SDK
     """
 
     def __init__(
@@ -148,52 +148,52 @@ class DashscopeVideoClient:
         audio: Optional[bool] = None,
     ) -> str:
         """
-        图生视频：提交任务 → 等待完成 → 下载到本地
+        Image-to-video: submit task -> wait for completion -> download locally
 
         Args:
-            prompt: 视频描述提示词
-            image_path: 输入首帧图片本地路径
-            save_path: 输出视频保存路径
-            model: 万象视频模型名
-            duration: 视频时长（秒）
-            shot_type: 镜头类型，"single" 或 "multi"
-            video_ratio: 输出画幅比例，如 9:16 / 16:9
-            last_image_path: 可选尾帧图片本地路径（wan2.7）
-            first_clip_path: 可选首段视频本地路径（wan2.7 视频续写）
-            reference_image_path: 可选参考图片路径（videoedit）
-            reference_image_paths: 可选参考图片列表（r2v）
-            reference_video_paths: 可选参考视频列表（r2v）
-            reference_audio_path: 可选参考音频/音色路径（r2v）
-            audio_path: 可选驱动音频本地路径（wan2.7）
+            prompt: Video description prompt
+            image_path: Local path of the input first-frame image
+            save_path: Output video save path
+            model: Wanxiang video model name
+            duration: Video duration (seconds)
+            shot_type: Shot type, "single" or "multi"
+            video_ratio: Output aspect ratio, e.g. 9:16 / 16:9
+            last_image_path: Optional local path of the last-frame image (wan2.7)
+            first_clip_path: Optional local path of the first video clip (wan2.7 video continuation)
+            reference_image_path: Optional reference image path (videoedit)
+            reference_image_paths: Optional list of reference images (r2v)
+            reference_video_paths: Optional list of reference videos (r2v)
+            reference_audio_path: Optional reference audio/voice path (r2v)
+            audio_path: Optional local path of the driving audio (wan2.7)
 
         Returns:
-            video_url: 远端视频 URL
+            video_url: Remote video URL
 
         Raises:
-            FileNotFoundError: 输入图片不存在
-            RuntimeError: API 调用或下载失败
+            FileNotFoundError: Input image does not exist
+            RuntimeError: API call or download failed
         """
         if VideoSynthesis is None:
             raise RuntimeError("dashscope package not installed. Run: pip install dashscope")
 
         if image_path and not os.path.exists(image_path):
-            raise FileNotFoundError(f"输入图片不存在: {image_path}")
+            raise FileNotFoundError(f"Input image does not exist: {image_path}")
         if last_image_path and not os.path.exists(last_image_path):
-            raise FileNotFoundError(f"尾帧图片不存在: {last_image_path}")
+            raise FileNotFoundError(f"Last-frame image does not exist: {last_image_path}")
         if first_clip_path and not os.path.exists(first_clip_path):
-            raise FileNotFoundError(f"输入视频片段不存在: {first_clip_path}")
+            raise FileNotFoundError(f"Input video clip does not exist: {first_clip_path}")
         if reference_image_path and not os.path.exists(reference_image_path):
-            raise FileNotFoundError(f"参考图片不存在: {reference_image_path}")
+            raise FileNotFoundError(f"Reference image does not exist: {reference_image_path}")
         for ref_image_path in reference_image_paths or []:
             if ref_image_path and not os.path.exists(ref_image_path):
-                raise FileNotFoundError(f"参考图片不存在: {ref_image_path}")
+                raise FileNotFoundError(f"Reference image does not exist: {ref_image_path}")
         for ref_video_path in reference_video_paths or []:
             if ref_video_path and not os.path.exists(ref_video_path):
-                raise FileNotFoundError(f"参考视频不存在: {ref_video_path}")
+                raise FileNotFoundError(f"Reference video does not exist: {ref_video_path}")
         if reference_audio_path and not os.path.exists(reference_audio_path):
-            raise FileNotFoundError(f"参考音频不存在: {reference_audio_path}")
+            raise FileNotFoundError(f"Reference audio does not exist: {reference_audio_path}")
         if audio_path and not os.path.exists(audio_path):
-            raise FileNotFoundError(f"驱动音频不存在: {audio_path}")
+            raise FileNotFoundError(f"Driving audio does not exist: {audio_path}")
 
         logger.info(f"DashscopeVideoClient: model={model}, prompt={prompt[:60]}...")
 
@@ -357,7 +357,7 @@ class DashscopeVideoClient:
 
         if rsp.status_code != HTTPStatus.OK:
             raise RuntimeError(
-                f"万象视频 API 错误: status={rsp.status_code}, "
+                f"Wanxiang video API error: status={rsp.status_code}, "
                 f"code={rsp.code}, message={rsp.message}"
             )
 
@@ -367,12 +367,12 @@ class DashscopeVideoClient:
             task_status = self._extract_task_status(rsp)
             if not task_id:
                 raise RuntimeError(
-                    "万象视频 API 未返回 video_url 或 task_id，无法查询结果: "
+                    "Wanxiang video API returned neither video_url nor task_id; cannot query result: "
                     f"status={rsp.status_code}, code={rsp.code}, message={rsp.message}, "
                     f"task_status={task_status}"
                 )
 
-            logger.info(f"DashscopeVideoClient: 任务已提交 task_id={task_id}, status={task_status}; 等待生成完成...")
+            logger.info(f"DashscopeVideoClient: task submitted task_id={task_id}, status={task_status}; waiting for generation to complete...")
             rsp = self._with_network_retry(
                 f"wait task {task_id}",
                 lambda: VideoSynthesis.wait(task=rsp, api_key=self.api_key),
@@ -381,7 +381,7 @@ class DashscopeVideoClient:
             )
             if rsp.status_code != HTTPStatus.OK:
                 raise RuntimeError(
-                    f"万象视频任务查询失败: status={rsp.status_code}, "
+                    f"Wanxiang video task query failed: status={rsp.status_code}, "
                     f"code={rsp.code}, message={rsp.message}, task_id={task_id}"
                 )
 
@@ -389,17 +389,17 @@ class DashscopeVideoClient:
             task_status = self._extract_task_status(rsp)
             if not video_url:
                 raise RuntimeError(
-                    "万象视频任务完成后仍未返回 video_url: "
+                    "Wanxiang video task completed but still did not return video_url: "
                     f"code={rsp.code}, message={rsp.message}, task_id={task_id}, task_status={task_status}, "
                     f"output={self._safe_output_repr(rsp)}"
                 )
 
-        logger.info(f"DashscopeVideoClient: 视频生成成功: {video_url}")
+        logger.info(f"DashscopeVideoClient: video generation succeeded: {video_url}")
 
-        # 确保输出目录存在
+        # Ensure the output directory exists
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
 
-        # 下载视频
+        # Download the video
         resp = self._with_network_retry(
             "download video",
             lambda: requests.get(
@@ -412,14 +412,14 @@ class DashscopeVideoClient:
             base_delay=3.0,
         )
         if resp.status_code != 200:
-            raise RuntimeError(f"视频下载失败: HTTP {resp.status_code}")
+            raise RuntimeError(f"Video download failed: HTTP {resp.status_code}")
 
         with open(save_path, 'wb') as f:
             for chunk in resp.iter_content(chunk_size=8192):
                 if chunk:
                     f.write(chunk)
 
-        logger.info(f"DashscopeVideoClient: 视频已保存: {save_path}")
+        logger.info(f"DashscopeVideoClient: video saved: {save_path}")
         return video_url
 
     def _is_video_edit_model(self, model: str) -> bool:
@@ -575,7 +575,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-    # ── 测试参数（按需修改） ──
+    # ── Test parameters (modify as needed) ──
     IMAGE_PATH = "code/result/image/test_avail/test_input_human.jpg"
     OUTPUT_DIR = "code/result/video/test_avail"
     PROMPT = "女人把报表交给男人，男人看清楚报表上的数据，露出满意的微笑，办公室背景，写实风格，高清细节。背景音乐：轻快的电子乐，节奏感强，适合办公环境。"
@@ -584,34 +584,34 @@ if __name__ == "__main__":
     DURATION = 5               # 5 / 10
     SHOT_TYPE = "multi"        # single / multi
 
-    print("=== Dashscope 视频客户端可用性测试 ===")
+    print("=== Dashscope video client availability test ===")
     ak = Config.DASHSCOPE_API_KEY
     base_url = Config.DASHSCOPE_BASE_URL
     if not ak:
-        print("✗ DASHSCOPE_API_KEY 未设置，请检查 .env 配置")
+        print("✗ DASHSCOPE_API_KEY is not set, please check the .env configuration")
         sys.exit(1)
 
     if not os.path.exists(IMAGE_PATH):
-        print(f"✗ 输入图片不存在: {IMAGE_PATH}")
+        print(f"✗ Input image does not exist: {IMAGE_PATH}")
         sys.exit(1)
 
     for model in MODELS:
         output_path = os.path.join(OUTPUT_DIR, f"{model}.mp4")
-        print(f"\n测试模型: {model}")
+        print(f"\nTest model: {model}")
         print(f"  API Key    : {ak[:6]}***{ak[-4:]}")
         print(f"  Base URL   : {base_url}")
-        print(f"  输入图片   : {IMAGE_PATH}")
-        print(f"  输出路径   : {output_path}")
-        print(f"  模型       : {model}")
-        print(f"  时长       : {DURATION}s")
-        print(f"  镜头类型   : {SHOT_TYPE}")
+        print(f"  Input image: {IMAGE_PATH}")
+        print(f"  Output path: {output_path}")
+        print(f"  Model      : {model}")
+        print(f"  Duration   : {DURATION}s")
+        print(f"  Shot type  : {SHOT_TYPE}")
         if PROMPT:
-            print(f"  提示词     : {PROMPT[:80]}")
+            print(f"  Prompt     : {PROMPT[:80]}")
         print("-" * 40)
 
         try:
             client = DashscopeVideoClient(api_key=ak, base_url=base_url)
-            print("✓ 客户端初始化成功")
+            print("✓ Client initialized successfully")
             
             start = time.time()
             video_url = client.generate_video(
@@ -624,10 +624,10 @@ if __name__ == "__main__":
             )
             elapsed = time.time() - start
 
-            print(f"✓ 视频生成完成！耗时 {elapsed:.1f}s")
-            print(f"  远端 URL : {video_url}")
-            print(f"  本地文件 : {os.path.abspath(output_path)}")
-            print(f"  文件大小 : {os.path.getsize(output_path) / 1024 / 1024:.2f} MB")
+            print(f"✓ Video generation complete! Took {elapsed:.1f}s")
+            print(f"  Remote URL : {video_url}")
+            print(f"  Local file : {os.path.abspath(output_path)}")
+            print(f"  File size  : {os.path.getsize(output_path) / 1024 / 1024:.2f} MB")
         except Exception as e:
-            print(f"✗ 失败: {e}")
+            print(f"✗ Failed: {e}")
             sys.exit(1)

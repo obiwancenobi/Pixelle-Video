@@ -178,7 +178,7 @@ class ImageClient:
                 print(f"Refs: {len(image_paths)}")
                 for p in image_paths:
                     if str(p).startswith("data:"):
-                        print(f" - [Base64图片]")
+                        print(f" - [Base64 image]")
                     else:
                         print(f" - {p}")
             print(f"Model: {model}")

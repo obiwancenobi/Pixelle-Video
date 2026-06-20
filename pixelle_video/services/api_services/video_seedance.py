@@ -1,5 +1,5 @@
 """
-Seedance 视频生成 API 客户端 (字节跳动 ARK)
+Seedance video generation API client (ByteDance ARK)
 
 """
 
@@ -14,8 +14,8 @@ logger = logging.getLogger(__name__)
 
 class SeedanceVideoClient:
     """
-    Seedance 视频生成客户端（字节跳动 ARK）
-    支持图生视频功能，采用 提交任务 -> 轮询 -> 下载 的异步流程
+    Seedance video generation client (ByteDance ARK)
+    Supports image-to-video generation using an async flow: submit task -> poll -> download
     """
 
     def __init__(
@@ -31,7 +31,7 @@ class SeedanceVideoClient:
         self.timeout = timeout
 
         if not self.api_key:
-            logger.warning("SeedanceVideoClient: ARK_API_KEY 未设置")
+            logger.warning("SeedanceVideoClient: ARK_API_KEY is not set")
 
     def _headers(self) -> dict:
         return {
@@ -54,34 +54,34 @@ class SeedanceVideoClient:
         **kwargs
     ) -> str:
         """
-        图生视频完整流程
+        Full image-to-video flow
 
         Args:
-            prompt: 提示词
-            image_path: 输入图片本地路径；为空时走文生视频
-            save_path: 输出视频保存路径
-            model: 模型名称
-            duration: 视频时长
+            prompt: Prompt
+            image_path: Local path of the input image; falls back to text-to-video when empty
+            save_path: Output video save path
+            model: Model name
+            duration: Video duration
         """
         if not self.api_key:
             raise RuntimeError("ARK_API_KEY not set.")
 
-        # 1. 提交任务
+        # 1. Submit task
         task_id = self._submit_task(prompt, image_path, model, duration, **kwargs)
-        
-        # 2. 轮询等待
+
+        # 2. Poll and wait
         video_url = self._poll_until_done(task_id)
-        
-        # 3. 下载视频
+
+        # 3. Download video
         self._download_video(video_url, save_path)
-        
+
         return video_url
 
     def _submit_task(self, prompt: str, image_path: Optional[str], model: str, duration: int, **kwargs) -> str:
-        # 根据 Seedance 2.0 文档更新接口路径
+        # Endpoint path updated per the Seedance 2.0 docs
         url = f"{self.base_url}/contents/generations/tasks"
 
-        # 构建 content 数组
+        # Build the content array
         content = []
         if prompt:
             content.append({
@@ -91,7 +91,7 @@ class SeedanceVideoClient:
 
         if image_path:
             if not os.path.exists(image_path):
-                raise FileNotFoundError(f"输入图片不存在: {image_path}")
+                raise FileNotFoundError(f"Input image does not exist: {image_path}")
 
             with open(image_path, "rb") as f:
                 img_data = base64.b64encode(f.read()).decode("utf-8")
@@ -99,7 +99,7 @@ class SeedanceVideoClient:
             mime = "image/png" if ext == ".png" else "image/jpeg"
             image_base64 = f"data:{mime};base64,{img_data}"
 
-            # 图生视频-首帧
+            # Image-to-video - first frame
             content.append({
                 "type": "image_url",
                 "image_url": {
@@ -116,12 +116,12 @@ class SeedanceVideoClient:
             "resolution": kwargs.get("resolution", "720p")
         }
 
-        # 合并其他可选参数 (如 seed, watermark)
+        # Merge other optional parameters (e.g. seed, watermark)
         for key in ["seed", "watermark", "generate_audio"]:
             if key in kwargs and kwargs[key] is not None:
                 payload[key] = kwargs[key]
 
-        logger.info(f"SeedanceVideoClient: 提交任务 model={model}, duration={duration}s")
+        logger.info(f"SeedanceVideoClient: submitting task model={model}, duration={duration}s")
         resp = requests.post(
             url,
             headers=self._headers(),
@@ -131,18 +131,18 @@ class SeedanceVideoClient:
         )
         
         if not resp.ok:
-            logger.error(f"Seedance 提交失败: {resp.text}")
+            logger.error(f"Seedance submission failed: {resp.text}")
             resp.raise_for_status()
-            
+
         data = resp.json()
         task_id = data.get("id")
         if not task_id:
-            raise RuntimeError(f"Seedance API 未返回任务 ID: {data}")
+            raise RuntimeError(f"Seedance API did not return a task ID: {data}")
             
         return task_id
 
     def _poll_until_done(self, task_id: str, max_polls: int = 120, interval: int = 5) -> str:
-        # 同步更新查询接口路径
+        # Query endpoint path updated to match
         url = f"{self.base_url}/contents/generations/tasks/{task_id}"
         
         for i in range(max_polls):
@@ -152,19 +152,19 @@ class SeedanceVideoClient:
             
             status = data.get("status")
             if status == "succeeded":
-                # 根据实际返回体，URL 位于 content.video_url 或 video_url
+                # Per the actual response body, the URL is at content.video_url or video_url
                 video_url = data.get("content", {}).get("video_url") or data.get("video_url")
                 if not video_url:
-                    raise RuntimeError(f"Seedance 任务成功但未返回视频 URL: {data}")
+                    raise RuntimeError(f"Seedance task succeeded but did not return a video URL: {data}")
                 return video_url
             elif status in ("failed", "expired"):
-                error_msg = data.get("error", {}).get("message") or data.get("status_msg") or "未知错误"
-                raise RuntimeError(f"Seedance 视频生成{status}: {error_msg}")
-            
-            logger.debug(f"SeedanceVideoClient: 任务进行中 {task_id}, status={status}, poll={i+1}")
+                error_msg = data.get("error", {}).get("message") or data.get("status_msg") or "Unknown error"
+                raise RuntimeError(f"Seedance video generation {status}: {error_msg}")
+
+            logger.debug(f"SeedanceVideoClient: task in progress {task_id}, status={status}, poll={i+1}")
             time.sleep(interval)
-            
-        raise TimeoutError(f"Seedance 视频生成超时 (task_id={task_id})")
+
+        raise TimeoutError(f"Seedance video generation timed out (task_id={task_id})")
 
     def _download_video(self, url: str, save_path: str):
         os.makedirs(os.path.dirname(save_path), exist_ok=True)
@@ -174,7 +174,7 @@ class SeedanceVideoClient:
             for chunk in resp.iter_content(chunk_size=8192):
                 if chunk:
                     f.write(chunk)
-        logger.info(f"SeedanceVideoClient: 视频已保存: {save_path}")
+        logger.info(f"SeedanceVideoClient: video saved: {save_path}")
 
 if __name__ == "__main__":
     import sys
@@ -183,7 +183,7 @@ if __name__ == "__main__":
 
     logging.basicConfig(level=logging.INFO, format="%(asctime)s %(levelname)s %(message)s")
 
-    # ── 测试参数（按需修改） ──
+    # ── Test parameters (modify as needed) ──
     # IMAGE_PATH = "code/result/image/test_avail/test_input.png"
     IMAGE_PATH = "code/result/image/test_avail/test_input_human.jpg"
     OUTPUT_PATH = "code/result/video/test_avail/seedance_test_output.mp4"
@@ -192,16 +192,16 @@ if __name__ == "__main__":
     MODELS = ["doubao-seedance-2-0-fast-260128"]
     DURATION = 5
 
-    print("=== Seedance (ARK) 图生视频测试 ===")
+    print("=== Seedance (ARK) image-to-video test ===")
     api_key = Config.ARK_API_KEY
     base_url = Config.ARK_BASE_URL
-    
+
     if not api_key:
-        print("✗ ARK_API_KEY 未设置，请检查 .env 配置")
+        print("✗ ARK_API_KEY is not set, please check the .env configuration")
         sys.exit(1)
 
     if not os.path.exists(IMAGE_PATH):
-        print(f"✗ 输入图片不存在: {IMAGE_PATH}")
+        print(f"✗ Input image does not exist: {IMAGE_PATH}")
         sys.exit(1)
 
     print(f"  API Key    : {api_key[:6]}***{api_key[-4:]}")
@@ -209,16 +209,16 @@ if __name__ == "__main__":
 
     for model in MODELS:
         print("\n" + "="*40)
-        print(f"  输入图片   : {IMAGE_PATH}")
-        print(f"  输出路径   : {OUTPUT_PATH}")
-        print(f"  模型       : {model}")
-        print(f"  时长       : {DURATION}s")
+        print(f"  Input image: {IMAGE_PATH}")
+        print(f"  Output path: {OUTPUT_PATH}")
+        print(f"  Model      : {model}")
+        print(f"  Duration   : {DURATION}s")
         if PROMPT:
-            print(f"  提示词     : {PROMPT[:80]}")
+            print(f"  Prompt     : {PROMPT[:80]}")
 
         try:
             client = SeedanceVideoClient(api_key=api_key, base_url=base_url)
-            print("✓ 客户端初始化成功")
+            print("✓ Client initialized successfully")
 
             start = time.time()
             video_url = client.generate_video(
@@ -230,11 +230,11 @@ if __name__ == "__main__":
             )
             elapsed = time.time() - start
 
-            print(f"✓ 视频生成完成！耗时 {elapsed:.1f}s")
-            print(f"  远端 URL : {video_url}")
-            print(f"  本地文件 : {os.path.abspath(OUTPUT_PATH)}")
-            print(f"  文件大小 : {os.path.getsize(OUTPUT_PATH) / 1024 / 1024:.2f} MB")
+            print(f"✓ Video generation complete! Took {elapsed:.1f}s")
+            print(f"  Remote URL : {video_url}")
+            print(f"  Local file : {os.path.abspath(OUTPUT_PATH)}")
+            print(f"  File size  : {os.path.getsize(OUTPUT_PATH) / 1024 / 1024:.2f} MB")
         except Exception as e:
-            print(f"✗ 失败: {e}")
+            print(f"✗ Failed: {e}")
             sys.exit(1)
-        break  # 只测试第一个模型
+        break  # Only test the first model

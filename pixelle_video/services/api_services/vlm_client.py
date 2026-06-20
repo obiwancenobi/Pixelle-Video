@@ -42,7 +42,7 @@ class VLM:
                 print(f"Images: {len(image_paths)}")
                 for p in image_paths:
                     if p.startswith("data:"):
-                        print(f" - [Base64图片]")
+                        print(f" - [Base64 image]")
                     else:
                         print(f" - {p}")
             if video_paths:
@@ -86,7 +86,7 @@ class VLM:
                 return f"file://{os.path.abspath(temp_path)}"
             except Exception as e:
                 print(f"Error processing base64 image: {e}")
-                raise ValueError(f"无法解析 base64 图片: {e}")
+                raise ValueError(f"Failed to parse base64 image: {e}")
 
         if path.startswith("http") or path.startswith("file://"):
             return path

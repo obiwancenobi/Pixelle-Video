@@ -442,7 +442,7 @@ class DigitalHumanPipelineUI(PipelineUI):
             logger.info(f"🔧 The obtained TTS parameters:")
             logger.info(f"  - tts_voice: {tts_voice}")
             logger.info(f"  - tts_speed: {tts_speed}")
-            logger.info(f"  - video_params中的tts_voice: {video_params.get('tts_voice', 'NOT_FOUND')}")
+            logger.info(f"  - tts_voice in video_params: {video_params.get('tts_voice', 'NOT_FOUND')}")
             logger.info(f"  - video_params: {video_params}")
             
             # Validation
@@ -562,7 +562,7 @@ class DigitalHumanPipelineUI(PipelineUI):
                                     if get_language() == "zh_CN"
                                     else "Use the product in reference image 2 and create a vertical product-promotion talking video."
                                 )
-                            prompt = f"{subject_prompt} 口播文案：{text}"
+                            prompt = f"{subject_prompt} Narration script: {text}"
 
                             final_video_path = os.path.join(task_dir, "final.mp4")
                             duration = int(api_video_params.pop("duration", 5))
@@ -593,8 +593,8 @@ class DigitalHumanPipelineUI(PipelineUI):
                             else:
                                 generated_text = await pixelle_video.llm(
                                     prompt=(
-                                        f"请为商品“{goods_title}”写一段适合数字人口播短视频的中文推广文案。"
-                                        "要求自然、有吸引力，控制在80字以内，只输出文案正文。"
+                                        f"Write a short promotional script for the product \"{goods_title}\" suitable for a digital-human talking short video. "
+                                        "Keep it natural and engaging, under about 80 words, and output only the script text."
                                     ),
                                     temperature=0.7,
                                     max_tokens=300,
@@ -807,8 +807,8 @@ class DigitalHumanPipelineUI(PipelineUI):
                                     generated_image_url = media_result.url
                                     generated_text = await pixelle_video.llm(
                                         prompt=(
-                                            f"请为商品“{goods_title}”写一段适合数字人口播短视频的中文推广文案。"
-                                            "要求自然、有吸引力，控制在80字以内，只输出文案正文。"
+                                            f"Write a short promotional script for the product \"{goods_title}\" suitable for a digital-human talking short video. "
+                                            "Keep it natural and engaging, under about 80 words, and output only the script text."
                                         ),
                                         temperature=0.7,
                                         max_tokens=300,

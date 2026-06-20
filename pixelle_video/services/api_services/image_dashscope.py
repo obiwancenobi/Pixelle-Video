@@ -24,7 +24,7 @@ class DashScopeClient:
 
     def __init__(self, api_key=None, base_url=None, local_proxy=None):
         self.api_key = api_key or os.getenv("DASHSCOPE_API_KEY")
-        # 默认使用中国（北京）地域 API，如果环境变量或参数未设置则使用默认地址
+        # Default to the China (Beijing) region API; if the environment variable or argument is not set, use the default address
         self.base_url = base_url or os.getenv("DASHSCOPE_BASE_URL")
         self.local_proxy = local_proxy
         if dashscope:
@@ -194,21 +194,21 @@ if __name__ == "__main__":
     sys.path.insert(0, os.path.dirname(os.path.dirname(os.path.abspath(__file__))))
     from config import Config
 
-    print("=== DashScope 图片生成可用性测试 ===")
+    print("=== DashScope Image Generation Availability Test ===")
     MODELS=["wan2.6-t2i", "wan2.7-image", "wan2.7-image-pro"]
     save_dir = "code/result/image/test_avail"
     api_key = Config.DASHSCOPE_API_KEY
     base_url = Config.DASHSCOPE_BASE_URL
     if not api_key:
-        print("✗ DASHSCOPE_API_KEY 未设置，跳过")
+        print("✗ DASHSCOPE_API_KEY is not set, skipping")
         sys.exit(1)
     print(f"  API Key: {api_key[:6]}***{api_key[-4:]}")
     print(f"  Base URL: {base_url}")
     client = DashScopeClient(api_key=api_key, base_url=base_url)
 
-    # 文生图
-    print("\n=== 文生图测试 ===")
-    prompt = "一只橘猫躺在阳光下的窗台上，水彩画风格"
+    # Text-to-image
+    print("\n=== Text-to-Image Test ===")
+    prompt = "an orange cat lying on a windowsill in the sun, watercolor style"
     for model in MODELS:
         print(f"\nPrompt: {prompt}")
         print(f"model: {model}")
@@ -221,17 +221,17 @@ if __name__ == "__main__":
             )
             elapsed = time.time() - t0
             if paths:
-                print(f"✓ 生成 {len(paths)} 张图片 ({elapsed:.1f}s): {paths}")
+                print(f"✓ Generated {len(paths)} images ({elapsed:.1f}s): {paths}")
             else:
-                print(f"✗ 返回空列表 ({elapsed:.1f}s)")
+                print(f"✗ Returned an empty list ({elapsed:.1f}s)")
         except Exception as e:
-            print(f"✗ 失败: {e}")
+            print(f"✗ Failed: {e}")
             sys.exit(1)
 
-    # 图生图
-    print("\n=== 图生图测试 ===")
+    # Image-to-image
+    print("\n=== Image-to-Image Test ===")
     img_path = "code/result/image/test_avail/test_input.png"
-    prompt = "在这张图片的基础上，添加一些飞舞的樱花花瓣，绘制为水彩画风格"
+    prompt = "based on this image, add some fluttering cherry blossom petals, rendered in watercolor style"
     for model in MODELS:
         print(f"\nPrompt: {prompt}")
         print(f"model: {model}")
@@ -244,9 +244,9 @@ if __name__ == "__main__":
             )
             elapsed = time.time() - t0
             if paths:
-                print(f"✓ 生成 {len(paths)} 张图片 ({elapsed:.1f}s): {paths}")
+                print(f"✓ Generated {len(paths)} images ({elapsed:.1f}s): {paths}")
             else:
-                print(f"✗ 返回空列表 ({elapsed:.1f}s)")
+                print(f"✗ Returned an empty list ({elapsed:.1f}s)")
         except Exception as e:
-            print(f"✗ 失败: {e}")
+            print(f"✗ Failed: {e}")
             sys.exit(1)

@@ -239,7 +239,7 @@ def render_grid_task_card(task: dict, pixelle_video):
         
         # Delete confirmation (show in modal-like way)
         if st.session_state.get(f"confirm_delete_{task_id}", False):
-            st.warning("⚠️ 确认删除?")
+            st.warning("⚠️ Confirm delete?")
             col1, col2 = st.columns(2)
             with col1:
                 if st.button("✅", key=f"confirm_yes_{task_id}", use_container_width=True):
@@ -250,9 +250,9 @@ def render_grid_task_card(task: dict, pixelle_video):
                             st.session_state[f"confirm_delete_{task_id}"] = False
                             st.rerun()
                         else:
-                            st.error("删除失败")
+                            st.error("Delete failed")
                     except Exception as e:
-                        st.error(f"删除失败: {str(e)}")
+                        st.error(f"Delete failed: {str(e)}")
             with col2:
                 if st.button("❌", key=f"confirm_no_{task_id}", use_container_width=True):
                     st.session_state[f"confirm_delete_{task_id}"] = False
