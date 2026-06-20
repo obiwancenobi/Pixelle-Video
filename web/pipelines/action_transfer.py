@@ -10,6 +10,7 @@ import httpx
 from web.i18n import tr, get_language
 from web.pipelines.base import PipelineUI, register_pipeline_ui
 from web.pipelines.api_workflows import (
+    is_api_source,
     is_api_workflow,
     list_api_media_workflows,
     list_local_media_workflows,
@@ -180,12 +181,13 @@ class ActionTransferPipelineUI(PipelineUI):
                 st.info(tr("action_transfer.assets.image_empty_hint"))
             
             def list_action_transfer_workflows():
-                if workflow_source == "api":
+                if is_api_source(workflow_source):
                     return list_api_media_workflows(
                         pixelle_video,
                         "video",
                         required_adapter_abilities=["action_transfer"],
                         verified_only=True,
+                        replicate_only=workflow_source == "replicate",
                     )
                 return list_local_media_workflows(
                     pixelle_video,
@@ -212,6 +214,15 @@ class ActionTransferPipelineUI(PipelineUI):
                 "video",
                 required_adapter_abilities=["action_transfer"],
                 verified_only=True,
+                replicate_only=True,
+            ):
+                source_options.append("replicate")
+            if list_api_media_workflows(
+                pixelle_video,
+                "video",
+                required_adapter_abilities=["action_transfer"],
+                verified_only=True,
+                replicate_only=False,
             ):
                 source_options.append("api")
 
@@ -237,13 +248,13 @@ class ActionTransferPipelineUI(PipelineUI):
             )
             
             transfer_workflows = list_action_transfer_workflows()
-            if workflow_source != "api" and not transfer_workflows:
+            if not is_api_source(workflow_source) and not transfer_workflows:
                 st.warning(
                     "当前来源下没有动作迁移工作流（需要 af_*.json）。"
                     if get_language() == "zh_CN"
                     else "No action-transfer workflow is available for this source (requires af_*.json)."
                 )
-            if workflow_source == "api" and not transfer_workflows:
+            if is_api_source(workflow_source) and not transfer_workflows:
                 st.caption(
                     "当前已接入的 API 视频模型没有已验证的动作迁移数据契约，暂不展示 API 模型。"
                     if get_language() == "zh_CN"

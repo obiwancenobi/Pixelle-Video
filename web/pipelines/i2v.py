@@ -9,6 +9,7 @@ import httpx
 from web.i18n import tr, get_language
 from web.pipelines.base import PipelineUI, register_pipeline_ui
 from web.pipelines.api_workflows import (
+    is_api_source,
     is_api_workflow,
     list_api_media_workflows,
     list_local_media_workflows,
@@ -72,12 +73,13 @@ class ImageToVideoPipelineUI(PipelineUI):
                 st.markdown(tr("i2v.assets.how"))
 
             def list_i2v_workflows():
-                if workflow_source == "api":
+                if is_api_source(workflow_source):
                     return list_api_media_workflows(
                         pixelle_video,
                         "video",
                         required_adapter_abilities=["first_frame_i2v"],
                         verified_only=True,
+                        replicate_only=workflow_source == "replicate",
                     )
                 return list_local_media_workflows(
                     pixelle_video,
@@ -142,6 +144,15 @@ class ImageToVideoPipelineUI(PipelineUI):
                 "video",
                 required_adapter_abilities=["first_frame_i2v"],
                 verified_only=True,
+                replicate_only=True,
+            ):
+                source_options.append("replicate")
+            if list_api_media_workflows(
+                pixelle_video,
+                "video",
+                required_adapter_abilities=["first_frame_i2v"],
+                verified_only=True,
+                replicate_only=False,
             ):
                 source_options.append("api")
 
@@ -167,7 +178,7 @@ class ImageToVideoPipelineUI(PipelineUI):
             )
             
             i2v_workflows = list_i2v_workflows()
-            if workflow_source != "api" and not i2v_workflows:
+            if not is_api_source(workflow_source) and not i2v_workflows:
                 st.warning(
                     "当前来源下没有图生视频工作流（需要 i2v_*.json）。"
                     if get_language() == "zh_CN"

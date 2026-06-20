@@ -14,6 +14,11 @@ def is_api_workflow(workflow_key: str | None) -> bool:
     return bool(workflow_key and workflow_key.startswith("api/"))
 
 
+def is_api_source(source: str | None) -> bool:
+    """Both 'api' and 'replicate' source pills resolve to api/ workflow keys."""
+    return source in ("api", "replicate")
+
+
 def is_source_workflow(workflow: dict, source: str) -> bool:
     """Return True when a workflow belongs to a concrete source namespace."""
     key = workflow.get("key") or workflow.get("path") or ""
@@ -26,6 +31,7 @@ def workflow_source_label(source: str) -> str:
     labels = {
         "selfhost": "本地 ComfyUI" if zh else "Local ComfyUI",
         "runninghub": "RunningHub",
+        "replicate": "Replicate",
         "api": "API 模型" if zh else "API models",
     }
     return labels.get(source, source)
@@ -39,11 +45,13 @@ def workflow_source_help(subject: str | None = None) -> str:
         return (
             f"选择{subject_text}使用的模型服务来源："
             "RunningHub 使用云端工作流；本地 ComfyUI 使用 selfhost 工作流；"
+            "Replicate 调用 replicate.com 上配置的托管模型；"
             "API 调用直接请求模型供应商。选择后，下方列表只显示该来源下可用的工作流或模型。"
         )
     return (
         f"Choose the model service source for {subject_text}: "
         "RunningHub uses cloud workflows; Local ComfyUI uses selfhost workflows; "
+        "Replicate runs the hosted models you configured on replicate.com; "
         "API call directly requests model providers. The list below only shows workflows or models from the selected source."
     )
 
@@ -127,8 +135,13 @@ def list_api_media_workflows(
     media_type: str,
     required_adapter_abilities: list[str] | tuple[str, ...] | set[str] | None = None,
     verified_only: bool = False,
+    replicate_only: bool | None = None,
 ) -> list[dict]:
-    """List API-backed media workflows in the same option shape used by UIs."""
+    """List API-backed media workflows in the same option shape used by UIs.
+
+    replicate_only: None = all providers, True = only Replicate, False = exclude Replicate.
+    Lets the 'Replicate' and 'API models' source pills surface disjoint sets.
+    """
     api_media = getattr(pixelle_video, "api_media", None)
     if api_media is None:
         return []
@@ -141,7 +154,16 @@ def list_api_media_workflows(
             if workflow.get("media_type") != media_type:
                 continue
 
-            if verified_only and not workflow.get("api_contract_verified", True):
+            is_replicate = workflow.get("provider") == "replicate"
+            if replicate_only is True and not is_replicate:
+                continue
+            if replicate_only is False and is_replicate:
+                continue
+
+            # Replicate refs are user-configured open-ended models that will never carry
+            # a hardcoded contract, so the verified_only gate would hide them forever.
+            # Trust them (render_api_video_controls already degrades for unverified contracts).
+            if verified_only and not is_replicate and not workflow.get("api_contract_verified", True):
                 continue
 
             adapter_abilities = set(workflow.get("adapter_ability_types") or [])

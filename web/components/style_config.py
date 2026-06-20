@@ -25,6 +25,7 @@ from web.i18n import tr, get_language
 from web.utils.async_helpers import run_async
 from web.utils.streamlit_helpers import check_and_warn_selfhost_workflow
 from web.pipelines.api_workflows import (
+    is_api_source,
     list_api_media_workflows,
     list_local_media_workflows,
     render_api_video_controls,
@@ -720,10 +721,18 @@ def render_style_config(pixelle_video):
                 else:
                     st.markdown(tr("style.workflow_how"))
 
-            source_options = ["runninghub", "selfhost", "api"]
+            # ponytail: static list (matches existing always-shown pills); an empty
+            # Replicate pill behaves like the empty "API models" pill already does.
+            source_options = ["runninghub", "selfhost", "replicate", "api"]
             default_source_index = 0
             for index, source in enumerate(source_options):
-                if saved_workflow.startswith(f"{source}/"):
+                if source == "replicate":
+                    matches = saved_workflow.startswith("api/replicate/")
+                elif source == "api":
+                    matches = saved_workflow.startswith("api/") and not saved_workflow.startswith("api/replicate/")
+                else:
+                    matches = saved_workflow.startswith(f"{source}/")
+                if matches:
                     default_source_index = index
                     break
             source_key = "standard_video_workflow_source" if template_media_type == "video" else "standard_image_workflow_source"
@@ -737,16 +746,20 @@ def render_style_config(pixelle_video):
                 help=workflow_source_help("快速创作媒体生成" if get_language() == "zh_CN" else "Quick Create media generation"),
             )
 
-            if workflow_source == "api":
+            if is_api_source(workflow_source):
+                replicate_only = workflow_source == "replicate"
                 if template_media_type == "video":
                     workflows = list_api_media_workflows(
                         pixelle_video,
                         "video",
                         required_adapter_abilities=["text_to_video"],
                         verified_only=True,
+                        replicate_only=replicate_only,
                     )
                 else:
-                    workflows = list_api_media_workflows(pixelle_video, "image")
+                    workflows = list_api_media_workflows(
+                        pixelle_video, "image", replicate_only=replicate_only
+                    )
             elif template_media_type == "video":
                 workflows = list_local_media_workflows(
                     pixelle_video,
@@ -771,7 +784,7 @@ def render_style_config(pixelle_video):
                 default_workflow_index = workflow_keys.index(saved_workflow)
         
             workflow_display = st.selectbox(
-                "Workflow" if workflow_source != "api" else ("API 模型" if get_language() == "zh_CN" else "API model"),
+                "Workflow" if not is_api_source(workflow_source) else ("API 模型" if get_language() == "zh_CN" else "API model"),
                 workflow_options if workflow_options else ["No workflows found"],
                 index=default_workflow_index,
                 label_visibility="visible",
@@ -787,7 +800,7 @@ def render_style_config(pixelle_video):
             else:
                 workflow_key = None
                 workflow_info = None
-                if workflow_source == "api" and template_media_type == "video":
+                if is_api_source(workflow_source) and template_media_type == "video":
                     st.warning(
                         "没有找到已验证的 API 文生视频模型，请先配置 DashScope/Seedance 等提供商，或切换到本地/RunningHub 工作流。"
                         if get_language() == "zh_CN"

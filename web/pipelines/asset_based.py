@@ -27,6 +27,7 @@ from loguru import logger
 from web.i18n import tr, get_language
 from web.pipelines.base import PipelineUI, register_pipeline_ui
 from web.pipelines.api_workflows import (
+    is_api_source,
     list_api_media_workflows,
     render_api_video_controls,
     workflow_select_help,
@@ -196,17 +197,20 @@ class AssetBasedPipelineUI(PipelineUI):
             source_options = {
                 "runninghub": tr("asset_based.source.runninghub"),
                 "selfhost": tr("asset_based.source.selfhost"),
+                "replicate": workflow_source_label("replicate"),
                 "api": "API 调用" if get_language() == "zh_CN" else "API call",
             }
-            
+
             # Check if RunningHub API key is configured
             comfyui_config = config_manager.get_comfyui_config()
             api_asset_analysis = getattr(pixelle_video, "api_asset_analysis", None)
-            api_vlm_models = (
+            all_vlm_models = (
                 api_asset_analysis.list_models(configured_only=True)
                 if api_asset_analysis is not None
                 else []
             )
+            replicate_vlm_models = [m for m in all_vlm_models if m.get("provider") == "replicate"]
+            api_vlm_models = [m for m in all_vlm_models if m.get("provider") != "replicate"]
             has_runninghub = bool(comfyui_config.get("runninghub_api_key"))
             has_selfhost = bool(comfyui_config.get("comfyui_url"))
             has_api_analysis = bool(api_vlm_models)
@@ -233,6 +237,8 @@ class AssetBasedPipelineUI(PipelineUI):
                 source_keys.append("runninghub")
             if analysis_source_available("selfhost"):
                 source_keys.append("selfhost")
+            if replicate_vlm_models:
+                source_keys.append("replicate")
             if has_api_analysis:
                 source_keys.append("api")
             if not source_keys:
@@ -240,6 +246,8 @@ class AssetBasedPipelineUI(PipelineUI):
 
             if has_api_analysis and "api" in source_keys:
                 default_source = "api"
+            elif "replicate" in source_keys:
+                default_source = "replicate"
             elif has_runninghub and "runninghub" in source_keys:
                 default_source = "runninghub"
             elif "selfhost" in source_keys:
@@ -263,7 +271,8 @@ class AssetBasedPipelineUI(PipelineUI):
             )
 
             def build_analysis_workflows(source_name: str) -> list[dict]:
-                if source_name == "api":
+                if is_api_source(source_name):
+                    models = replicate_vlm_models if source_name == "replicate" else api_vlm_models
                     return [
                         {
                             "display_name": model_info["display_name"],
@@ -271,7 +280,7 @@ class AssetBasedPipelineUI(PipelineUI):
                             "video_workflow": None,
                             "model": model_info["model"],
                         }
-                        for model_info in api_vlm_models
+                        for model_info in models
                     ]
 
                 source_dir = Path("workflows") / source_name
@@ -322,8 +331,9 @@ class AssetBasedPipelineUI(PipelineUI):
                 )
             
             # Show hint based on selection
-            if source == "api":
-                if not has_api_analysis:
+            if is_api_source(source):
+                source_has_models = bool(replicate_vlm_models) if source == "replicate" else has_api_analysis
+                if not source_has_models:
                     st.warning(
                         "未配置可用于 VLM 素材分析的 API Key（DashScope/OpenAI/Gemini）。"
                         if get_language() == "zh_CN"
@@ -360,8 +370,18 @@ class AssetBasedPipelineUI(PipelineUI):
                 "video",
                 required_adapter_abilities=["first_frame_i2v"],
                 verified_only=True,
+                replicate_only=False,
+            )
+            replicate_animation_workflows = list_api_media_workflows(
+                pixelle_video,
+                "video",
+                required_adapter_abilities=["first_frame_i2v"],
+                verified_only=True,
+                replicate_only=True,
             )
             animation_source_options = ["none"]
+            if replicate_animation_workflows:
+                animation_source_options.append("replicate")
             if api_video_workflows:
                 animation_source_options.append("api")
 
@@ -386,8 +406,10 @@ class AssetBasedPipelineUI(PipelineUI):
                 ),
             )
 
-            if animation_source == "api":
-                animation_workflows = api_video_workflows
+            if is_api_source(animation_source):
+                animation_workflows = (
+                    replicate_animation_workflows if animation_source == "replicate" else api_video_workflows
+                )
                 animation_options = [wf["display_name"] for wf in animation_workflows]
                 selected_animation = st.selectbox(
                     "素材动画工作流/模型" if get_language() == "zh_CN" else "Asset animation workflow/model",
@@ -462,7 +484,8 @@ class AssetBasedPipelineUI(PipelineUI):
         
         return {
             "duration": duration,
-            "source": source,
+            # 'replicate' is a UI-only grouping; backend VLM routing keys on 'api' + the model ref.
+            "source": "api" if source == "replicate" else source,
             "analysis_image_workflow": selected_analysis_workflow.get("image_workflow"),
             "analysis_video_workflow": selected_analysis_workflow.get("video_workflow"),
             "analysis_vlm_model": selected_analysis_workflow.get("model"),
