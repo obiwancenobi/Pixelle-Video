@@ -200,7 +200,7 @@ def render_style_config(pixelle_video):
             # Preview text input
             preview_text = st.text_input(
                 tr("tts.preview_text"),
-                value="大家好，这是一段测试语音。",
+                value="Hello, this is a voiceover preview.",
                 placeholder=tr("tts.preview_text_placeholder"),
                 key="tts_preview_text"
             )
