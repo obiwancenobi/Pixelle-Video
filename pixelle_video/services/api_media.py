@@ -791,9 +791,16 @@ Original prompt:
             "contract_issues": ["No official API contract metadata has been added for this model."],
         }
         if provider == "replicate":
-            # Replicate models can be text- or image-to-video; allow both so the
-            # generic dispatch doesn't reject t2v models that take no input image.
-            default = {**default, "adapter_ability_types": ["text_to_video", "first_frame_i2v"]}
+            # Replicate models are open-ended, so abilities can't be inferred from the ref.
+            # Honor per-model abilities declared in config; otherwise allow text- and
+            # image-to-video so the generic dispatch doesn't reject t2v models.
+            abilities_map = (
+                (self.config.get("api_providers", {}) or {}).get("replicate", {}) or {}
+            ).get("video_model_abilities", {}) or {}
+            bare = model.split("replicate:", 1)[-1]
+            declared = abilities_map.get(bare) or abilities_map.get(model)
+            abilities = list(declared) if declared else ["text_to_video", "first_frame_i2v"]
+            default = {**default, "adapter_ability_types": abilities}
         return deepcopy(self.VIDEO_MODEL_CAPABILITIES.get((provider, model), default))
 
     def _video_options(

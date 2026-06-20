@@ -53,6 +53,15 @@ class ReplicateProviderConfig(BaseModel):
     use_proxy: bool = Field(default=False, description="Route provider requests through common local proxy")
     image_models: list[str] = Field(default_factory=list, description="Replicate image model refs, e.g. owner/model")
     video_models: list[str] = Field(default_factory=list, description="Replicate video model refs, e.g. owner/model")
+    video_model_abilities: dict[str, list[str]] = Field(
+        default_factory=dict,
+        description=(
+            "Optional per-video-model ability tags, keyed by model ref (without the 'replicate:' prefix). "
+            "Controls which generation-source pickers each model appears in. "
+            "Valid abilities: text_to_video, first_frame_i2v, action_transfer, digital_human, audio_driven_i2v. "
+            "Refs not listed here default to [text_to_video, first_frame_i2v]."
+        ),
+    )
     vlm_models: list[str] = Field(default_factory=list, description="Replicate VLM (image captioning) model refs, e.g. owner/model")
 
 
