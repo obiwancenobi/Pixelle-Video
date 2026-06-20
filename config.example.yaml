@@ -40,6 +40,12 @@ api_providers:
     access_key: ""
     secret_key: ""
     use_proxy: false
+  # Replicate: pick any model at replicate.com. Use it by setting the image/video
+  # model name to "replicate:<owner>/<model>", e.g. "replicate:black-forest-labs/flux-1.1-pro"
+  # (image) or "replicate:minimax/video-01" (video).
+  replicate:
+    api_token: ""
+    use_proxy: false
 
 # ==================== ComfyUI Configuration ====================
 comfyui:

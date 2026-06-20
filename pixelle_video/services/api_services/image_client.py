@@ -9,11 +9,13 @@ try:
     from .image_dashscope import DashScopeClient
     from .image_seedream import SeedreamClient
     from .image_gpt import ImageGPT
+    from .image_replicate import ReplicateImageClient
     from .image_processor import ImageProcessor
 except ImportError:
     from .image_dashscope import DashScopeClient
     from .image_seedream import SeedreamClient
     from .image_gpt import ImageGPT
+    from .image_replicate import ReplicateImageClient
     from .image_processor import ImageProcessor
 
 class ImageClient:
@@ -26,7 +28,9 @@ class ImageClient:
                  local_proxy: Optional[str] = None,
                  ark_api_key: Optional[str] = None,
                  ark_base_url: Optional[str] = None,
-                 ark_local_proxy: Optional[str] = None):
+                 ark_local_proxy: Optional[str] = None,
+                 replicate_api_token: Optional[str] = None,
+                 replicate_local_proxy: Optional[str] = None):
         """
         Unified Image Generation Client
         Routes requests to DashScope, Seedream, or GPT based on model name.
@@ -43,9 +47,13 @@ class ImageClient:
         self._ark_base_url = ark_base_url or Config.ARK_BASE_URL
         self._ark_local_proxy = ark_local_proxy
 
+        self._replicate_api_token = replicate_api_token or Config.REPLICATE_API_TOKEN
+        self._replicate_local_proxy = replicate_local_proxy
+
         self._dashscope_client = None
         self._seedream_client = None
         self._gpt_client = None
+        self._replicate_client = None
 
         # Initialize Image Processor for downloads
         self.image_processor = ImageProcessor()
@@ -89,6 +97,16 @@ class ImageClient:
                 local_proxy=self._gpt_local_proxy,
             )
         return self._gpt_client
+
+    @property
+    def replicate_client(self):
+        """Create Replicate client only when a replicate: model is selected."""
+        if self._replicate_client is None:
+            self._replicate_client = ReplicateImageClient(
+                api_token=self._replicate_api_token,
+                local_proxy=self._replicate_local_proxy,
+            )
+        return self._replicate_client
 
     def generate_image(self,
                        prompt: str,
@@ -172,6 +190,7 @@ class ImageClient:
             print("-" * 30)
             
         # Determine backend provider
+        is_replicate = model.lower().startswith("replicate:")
         is_seedream = "seedream" in model.lower()
         is_sora = "sora" in model.lower() or "gpt" in model.lower()
         
@@ -185,7 +204,26 @@ class ImageClient:
         
         generated_local_paths = []
 
-        if is_seedream:
+        if is_replicate:
+            # --- Replicate Logic ---
+            try:
+                logging.info(f"ImageClient requesting Replicate: {model}")
+                paths = self.replicate_client.generate_image(
+                    prompt=prompt,
+                    model=model,
+                    save_dir=save_dir,
+                    size=size,
+                    video_ratio=video_ratio,
+                    image_paths=image_paths,
+                    session_id=session_id,
+                )
+                if paths:
+                    generated_local_paths.extend(paths)
+            except Exception as e:
+                logging.error(f"Replicate generation failed: {e}")
+                raise RuntimeError(f"Replicate generation failed: {e}") from e
+
+        elif is_seedream:
             # --- Seedream Logic ---
             try:
                 logging.info(f"ImageClient requesting Seedream: {model}")

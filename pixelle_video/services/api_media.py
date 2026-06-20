@@ -680,6 +680,8 @@ class APIProviderMediaService:
             ark_api_key=cfg["ark"].get("api_key") or None,
             ark_base_url=cfg["ark"].get("base_url") or None,
             ark_local_proxy=local_proxy if cfg["ark"].get("use_proxy") else None,
+            replicate_api_token=cfg.get("replicate", {}).get("api_token") or None,
+            replicate_local_proxy=local_proxy if cfg.get("replicate", {}).get("use_proxy") else None,
         )
 
     def _create_video_client(self):
@@ -698,6 +700,8 @@ class APIProviderMediaService:
             ark_api_key=cfg["ark"].get("api_key") or None,
             ark_base_url=cfg["ark"].get("base_url") or None,
             ark_local_proxy=local_proxy if cfg["ark"].get("use_proxy") else None,
+            replicate_api_token=cfg.get("replicate", {}).get("api_token") or None,
+            replicate_local_proxy=local_proxy if cfg.get("replicate", {}).get("use_proxy") else None,
         )
 
     def _save_dir(self, output_path: Optional[str], fallback_name: str) -> str:

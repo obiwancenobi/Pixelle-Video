@@ -14,10 +14,12 @@ try:
     from .video_dashscope import DashscopeVideoClient
     from .video_kling import KlingVideoClient
     from .video_seedance import SeedanceVideoClient
+    from .video_replicate import ReplicateVideoClient
 except ImportError:
     from video_dashscope import DashscopeVideoClient
     from video_kling import KlingVideoClient
     from video_seedance import SeedanceVideoClient
+    from video_replicate import ReplicateVideoClient
 
 logger = logging.getLogger(__name__)
 
@@ -40,6 +42,8 @@ class VideoClient:
         ark_api_key: Optional[str] = None,
         ark_base_url: Optional[str] = None,
         ark_local_proxy: Optional[str] = None,
+        replicate_api_token: Optional[str] = None,
+        replicate_local_proxy: Optional[str] = None,
     ):
         self._dashscope_api_key = dashscope_api_key or Config.DASHSCOPE_API_KEY
         self._dashscope_base_url = dashscope_base_url or Config.DASHSCOPE_BASE_URL
@@ -54,9 +58,13 @@ class VideoClient:
         self._ark_base_url = ark_base_url or Config.ARK_BASE_URL or os.getenv("ARK_BASE_URL")
         self._ark_local_proxy = ark_local_proxy
 
+        self._replicate_api_token = replicate_api_token or Config.REPLICATE_API_TOKEN
+        self._replicate_local_proxy = replicate_local_proxy
+
         self._dashscope_client = None
         self._kling_client = None
         self._seedance_client = None
+        self._replicate_client = None
 
     @property
     def Dashscope_client(self):
@@ -91,6 +99,16 @@ class VideoClient:
                 local_proxy=self._ark_local_proxy,
             )
         return self._seedance_client
+
+    @property
+    def replicate_client(self):
+        """Create Replicate client only when a replicate: model is selected."""
+        if self._replicate_client is None:
+            self._replicate_client = ReplicateVideoClient(
+                api_token=self._replicate_api_token,
+                local_proxy=self._replicate_local_proxy,
+            )
+        return self._replicate_client
 
     def generate_video(
         self,
@@ -176,7 +194,17 @@ class VideoClient:
 
         model_lower = model.lower()
 
-        if "kling" in model_lower:
+        if model_lower.startswith("replicate:"):
+            logger.info(f"VideoClient: 路由至 Replicate model={model}")
+            return self.replicate_client.generate_video(
+                prompt=prompt,
+                image_path=image_path,
+                save_path=save_path,
+                model=model,
+                duration=duration,
+                video_ratio=video_ratio,
+            )
+        elif "kling" in model_lower:
             return self._generate_kling(
                 prompt,
                 image_path,

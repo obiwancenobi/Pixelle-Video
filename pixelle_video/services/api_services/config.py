@@ -37,6 +37,7 @@ class _ConfigMeta(type):
             "KLING_BASE_URL": ("kling", "base_url", ""),
             "KLING_ACCESS_KEY": ("kling", "access_key", ""),
             "KLING_SECRET_KEY": ("kling", "secret_key", ""),
+            "REPLICATE_API_TOKEN": ("replicate", "api_token", ""),
         }
 
         if name not in mapping:

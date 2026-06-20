@@ -47,6 +47,12 @@ class AccessSecretProviderConfig(BaseModel):
     use_proxy: bool = Field(default=False, description="Route provider requests through common local proxy")
 
 
+class ReplicateProviderConfig(BaseModel):
+    """Replicate settings (token-based; model ref carried in the model name)"""
+    api_token: str = Field(default="", description="Replicate API token")
+    use_proxy: bool = Field(default=False, description="Route provider requests through common local proxy")
+
+
 class APIProvidersConfig(BaseModel):
     """Direct model provider API configuration"""
     common: APIProviderCommonConfig = Field(default_factory=APIProviderCommonConfig)
@@ -56,6 +62,7 @@ class APIProvidersConfig(BaseModel):
     gemini: APIKeyProviderConfig = Field(default_factory=APIKeyProviderConfig)
     ark: APIKeyProviderConfig = Field(default_factory=APIKeyProviderConfig)
     kling: AccessSecretProviderConfig = Field(default_factory=AccessSecretProviderConfig)
+    replicate: ReplicateProviderConfig = Field(default_factory=ReplicateProviderConfig)
 
 
 class TTSLocalConfig(BaseModel):
