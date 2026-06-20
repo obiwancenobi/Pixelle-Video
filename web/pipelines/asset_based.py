@@ -418,7 +418,7 @@ class AssetBasedPipelineUI(PipelineUI):
             comfyui_config = config_manager.get_comfyui_config()
             tts_config = comfyui_config.get("tts", {})
             local_config = tts_config.get("local", {})
-            saved_voice = local_config.get("voice", "zh-CN-YunjianNeural")
+            saved_voice = local_config.get("voice", "en-US-JennyNeural")
             saved_speed = local_config.get("speed", 1.2)
             
             # Build voice options with i18n
@@ -587,7 +587,7 @@ class AssetBasedPipelineUI(PipelineUI):
                         bgm_mode=video_params.get("bgm_mode", "loop"),
                         api_video_workflow=video_params.get("api_video_workflow"),
                         api_video_params=video_params.get("api_video_params"),
-                        voice_id=video_params.get("voice_id", "zh-CN-YunjianNeural"),
+                        voice_id=video_params.get("voice_id", "en-US-JennyNeural"),
                         tts_speed=video_params.get("tts_speed", 1.2),
                         progress_callback=update_progress
                     ))

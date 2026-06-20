@@ -497,7 +497,7 @@ class AssetBasedPipeline(LinearVideoPipeline):
             max_narration_words=50,
             video_fps=30,
             tts_inference_mode="local",
-            voice_id=context.params.get("voice_id", "zh-CN-YunjianNeural"),
+            voice_id=context.params.get("voice_id", "en-US-JennyNeural"),
             tts_speed=context.params.get("tts_speed", 1.2),
             media_width=media_width,
             media_height=media_height,
