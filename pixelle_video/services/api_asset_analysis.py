@@ -36,6 +36,7 @@ class APIAssetAnalysisService:
 
     VLM_PROVIDER_LABELS = {
         "dashscope": "DashScope",
+        "replicate": "Replicate",
     }
 
     IMAGE_PROMPT = """请分析这张素材图片，用中文给出适合短视频脚本创作的简洁描述。
@@ -79,6 +80,25 @@ class APIAssetAnalysisService:
                     "display_name": f"{model} - API {provider_label}",
                     "source": "api",
                     "provider": provider,
+                    "model": model,
+                    "media_type": "asset_analysis",
+                    "ability_type": "vlm_asset_analysis",
+                    "ability_types": ["vlm_asset_analysis"],
+                })
+
+        # Replicate hosts an open marketplace, so VLM models are user-configured
+        # (gated on api_token), not a hardcoded list. Image captioning only.
+        replicate_config = providers.get("replicate", {}) or {}
+        if not (configured_only and not replicate_config.get("api_token")):
+            for ref in replicate_config.get("vlm_models", []) or []:
+                model = ref if ref.startswith("replicate:") else f"replicate:{ref}"
+                bare = model.split("replicate:", 1)[-1]
+                models.append({
+                    "key": f"api/vlm/replicate/{bare}",
+                    "name": bare,
+                    "display_name": f"{bare} - API Replicate",
+                    "source": "api",
+                    "provider": "replicate",
                     "model": model,
                     "media_type": "asset_analysis",
                     "ability_type": "vlm_asset_analysis",
@@ -153,6 +173,24 @@ class APIAssetAnalysisService:
         )
 
         providers = self.config.get("api_providers", {}) or {}
+
+        if selected_model.startswith("replicate:"):
+            if video_paths:
+                raise RuntimeError("Replicate VLM analysis supports images only, not video.")
+            from pixelle_video.services.api_services.vlm_replicate import query_vlm
+            replicate_cfg = providers.get("replicate", {}) or {}
+            result = await asyncio.to_thread(
+                query_vlm,
+                replicate_cfg.get("api_token"),
+                selected_model,
+                prompt,
+                image_paths,
+            )
+            description = str(result or "").strip()
+            if not description:
+                raise RuntimeError("Replicate VLM analysis returned empty description")
+            return description
+
         dashscope = providers.get("dashscope", {}) or {}
 
         client = VLM(

@@ -460,6 +460,12 @@ def render_advanced_settings():
                     placeholder="minimax/video-01, kwaivgi/kling-v1.6",
                     key="api_media_replicate_video_models",
                 )
+                api_replicate_vlm_models = st.text_input(
+                    "Replicate 图像分析模型（逗号分隔）" if zh else "Replicate image-analysis (VLM) models (comma-separated)",
+                    value=", ".join(replicate_cfg.get("vlm_models", []) or []),
+                    placeholder="lucataco/qwen2-vl-7b-instruct, yorickvp/llava-13b",
+                    key="api_media_replicate_vlm_models",
+                )
                 if st.button(
                     "测试 Replicate 连接" if zh else "Test Replicate connection",
                     key="api_media_replicate_test",
@@ -525,6 +531,7 @@ def render_advanced_settings():
                         "use_proxy": bool(api_replicate_use_proxy),
                         "image_models": [m.strip() for m in (api_replicate_image_models or "").split(",") if m.strip()],
                         "video_models": [m.strip() for m in (api_replicate_video_models or "").split(",") if m.strip()],
+                        "vlm_models": [m.strip() for m in (api_replicate_vlm_models or "").split(",") if m.strip()],
                     })
 
                     # Only save to file if LLM config is valid

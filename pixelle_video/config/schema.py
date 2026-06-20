@@ -53,6 +53,7 @@ class ReplicateProviderConfig(BaseModel):
     use_proxy: bool = Field(default=False, description="Route provider requests through common local proxy")
     image_models: list[str] = Field(default_factory=list, description="Replicate image model refs, e.g. owner/model")
     video_models: list[str] = Field(default_factory=list, description="Replicate video model refs, e.g. owner/model")
+    vlm_models: list[str] = Field(default_factory=list, description="Replicate VLM (image captioning) model refs, e.g. owner/model")
 
 
 class APIProvidersConfig(BaseModel):
@@ -69,7 +70,7 @@ class APIProvidersConfig(BaseModel):
 
 class TTSLocalConfig(BaseModel):
     """Local TTS configuration (Edge TTS)"""
-    voice: str = Field(default="zh-CN-YunjianNeural", description="Edge TTS voice ID")
+    voice: str = Field(default="en-US-JennyNeural", description="Edge TTS voice ID")
     speed: float = Field(default=1.2, ge=0.5, le=2.0, description="Speech speed multiplier (0.5-2.0)")
 
 

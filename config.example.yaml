@@ -50,6 +50,7 @@ api_providers:
     # "replicate:" prefix is added automatically.
     image_models: []   # e.g. ["black-forest-labs/flux-1.1-pro"]
     video_models: []   # e.g. ["minimax/video-01"]
+    vlm_models: []     # image-analysis/captioning, e.g. ["lucataco/qwen2-vl-7b-instruct"]
 
 # ==================== ComfyUI Configuration ====================
 comfyui:
