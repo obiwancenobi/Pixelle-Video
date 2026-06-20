@@ -203,6 +203,12 @@ class VideoClient:
                 model=model,
                 duration=duration,
                 video_ratio=video_ratio,
+                reference_image_path=reference_image_path,
+                reference_image_paths=reference_image_paths,
+                reference_audio_path=reference_audio_path,
+                audio_path=audio_path,
+                first_clip_path=first_clip_path,
+                reference_video_paths=reference_video_paths,
             )
         elif "kling" in model_lower:
             return self._generate_kling(

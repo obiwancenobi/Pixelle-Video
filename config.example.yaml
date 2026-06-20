@@ -49,13 +49,15 @@ api_providers:
     # Models you want selectable in the UI. Bare "owner/model" refs; the
     # "replicate:" prefix is added automatically.
     image_models: []   # e.g. ["black-forest-labs/flux-1.1-pro"]
-    video_models: []   # e.g. ["minimax/video-01"]
+    video_models: []   # e.g. ["lightricks/ltx-2-fast", "cjwbw/sadtalker", "zsxkib/mimic-motion"]
     vlm_models: []     # image-analysis/captioning, e.g. ["lucataco/qwen2-vl-7b-instruct"]
     # Optional: declare each video model's abilities to control which generation-source
     # pickers it appears in. Key = bare "owner/model" ref. Valid abilities:
     #   text_to_video, first_frame_i2v, action_transfer, digital_human, audio_driven_i2v
-    # Refs not listed default to [text_to_video, first_frame_i2v].
-    video_model_abilities: {}  # e.g. {"some-owner/talking-head": ["digital_human"]}
+    # Refs not listed default to [text_to_video, first_frame_i2v]. Examples:
+    #   cjwbw/sadtalker:    [digital_human]    # DH talking-video (portrait + audio)
+    #   zsxkib/mimic-motion: [action_transfer]  # motion transfer (image + driving video)
+    video_model_abilities: {}
 
 # ==================== ComfyUI Configuration ====================
 comfyui:

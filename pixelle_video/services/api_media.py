@@ -555,7 +555,7 @@ class APIProviderMediaService:
                 "API video models require image_path, first_clip_path, or reference media inputs. "
                 "Use an image template first or pass input image/video/reference media when calling media generation."
             )
-        if first_clip_path and not image_path and provider != "dashscope":
+        if first_clip_path and not image_path and provider not in ("dashscope", "replicate"):
             raise ValueError(f"first_clip_path is only supported for DashScope wan2.7 models, not provider={provider}.")
 
         client = self._create_video_client()
@@ -845,6 +845,19 @@ Original prompt:
             options.update(
                 {
                     "generate_audio": params.get("generate_audio"),
+                }
+            )
+        elif provider == "replicate":
+            # Forward driving inputs so per-model adapters (sadtalker, mimic-motion)
+            # can map them; video_replicate.py picks the ones each model needs.
+            options.update(
+                {
+                    "reference_image_path": params.get("reference_image_path"),
+                    "reference_image_paths": params.get("reference_image_paths"),
+                    "reference_audio_path": params.get("reference_audio_path") or params.get("reference_voice_path"),
+                    "audio_path": params.get("audio_path") or params.get("driving_audio_path"),
+                    "first_clip_path": params.get("first_clip_path") or params.get("first_video_path"),
+                    "reference_video_paths": params.get("reference_video_paths"),
                 }
             )
 
