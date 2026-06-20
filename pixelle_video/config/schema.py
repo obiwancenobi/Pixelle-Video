@@ -51,6 +51,8 @@ class ReplicateProviderConfig(BaseModel):
     """Replicate settings (token-based; model ref carried in the model name)"""
     api_token: str = Field(default="", description="Replicate API token")
     use_proxy: bool = Field(default=False, description="Route provider requests through common local proxy")
+    image_models: list[str] = Field(default_factory=list, description="Replicate image model refs, e.g. owner/model")
+    video_models: list[str] = Field(default_factory=list, description="Replicate video model refs, e.g. owner/model")
 
 
 class APIProvidersConfig(BaseModel):

@@ -46,6 +46,10 @@ api_providers:
   replicate:
     api_token: ""
     use_proxy: false
+    # Models you want selectable in the UI. Bare "owner/model" refs; the
+    # "replicate:" prefix is added automatically.
+    image_models: []   # e.g. ["black-forest-labs/flux-1.1-pro"]
+    video_models: []   # e.g. ["minimax/video-01"]
 
 # ==================== ComfyUI Configuration ====================
 comfyui:

@@ -391,7 +391,28 @@ class APIProviderMediaService:
             for model in models:
                 workflows.append(self._workflow_info(provider, model, "video"))
 
+        # Replicate models are user-configured (open-ended owner/model refs),
+        # so they come from config rather than a fixed list.
+        replicate_cfg = (self.config.get("api_providers", {}) or {}).get("replicate", {}) or {}
+        if replicate_cfg.get("api_token"):
+            for raw in replicate_cfg.get("image_models", []) or []:
+                model = self._normalize_replicate_model(raw)
+                if model:
+                    workflows.append(self._workflow_info("replicate", model, "image"))
+            for raw in replicate_cfg.get("video_models", []) or []:
+                model = self._normalize_replicate_model(raw)
+                if model:
+                    workflows.append(self._workflow_info("replicate", model, "video"))
+
         return workflows
+
+    @staticmethod
+    def _normalize_replicate_model(raw: str) -> Optional[str]:
+        """Ensure the model ref carries the 'replicate:' prefix used for dispatch."""
+        model = (raw or "").strip()
+        if not model:
+            return None
+        return model if model.lower().startswith("replicate:") else f"replicate:{model}"
 
     def _workflow_info(self, provider: str, model: str, media_type: str) -> dict:
         key = f"api/{provider}/{model}"
@@ -769,6 +790,10 @@ class APIProviderMediaService:
             "source_urls": [],
             "contract_issues": ["No official API contract metadata has been added for this model."],
         }
+        if provider == "replicate":
+            # Replicate models can be text- or image-to-video; allow both so the
+            # generic dispatch doesn't reject t2v models that take no input image.
+            default = {**default, "adapter_ability_types": ["text_to_video", "first_frame_i2v"]}
         return deepcopy(self.VIDEO_MODEL_CAPABILITIES.get((provider, model), default))
 
     def _video_options(

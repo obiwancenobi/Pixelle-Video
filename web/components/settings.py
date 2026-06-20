@@ -448,6 +448,25 @@ def render_advanced_settings():
                     placeholder="r8_...",
                     key="api_media_replicate_token",
                 )
+                api_replicate_image_models = st.text_input(
+                    "Replicate 图像模型（逗号分隔）" if zh else "Replicate image models (comma-separated)",
+                    value=", ".join(replicate_cfg.get("image_models", []) or []),
+                    placeholder="black-forest-labs/flux-1.1-pro, ideogram-ai/ideogram-v2",
+                    key="api_media_replicate_image_models",
+                )
+                api_replicate_video_models = st.text_input(
+                    "Replicate 视频模型（逗号分隔）" if zh else "Replicate video models (comma-separated)",
+                    value=", ".join(replicate_cfg.get("video_models", []) or []),
+                    placeholder="minimax/video-01, kwaivgi/kling-v1.6",
+                    key="api_media_replicate_video_models",
+                )
+                if st.button(
+                    "测试 Replicate 连接" if zh else "Test Replicate connection",
+                    key="api_media_replicate_test",
+                ):
+                    from pixelle_video.services.api_services.image_replicate import test_connection
+                    ok, msg = test_connection(api_replicate_token)
+                    (st.success if ok else st.error)(msg)
 
         # ====================================================================
         # Action Buttons (full width at bottom)
@@ -504,6 +523,8 @@ def render_advanced_settings():
                     config_manager.set_api_provider_config("replicate", {
                         "api_token": api_replicate_token or "",
                         "use_proxy": bool(api_replicate_use_proxy),
+                        "image_models": [m.strip() for m in (api_replicate_image_models or "").split(",") if m.strip()],
+                        "video_models": [m.strip() for m in (api_replicate_video_models or "").split(",") if m.strip()],
                     })
 
                     # Only save to file if LLM config is valid

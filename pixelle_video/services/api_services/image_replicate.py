@@ -11,6 +11,28 @@ except ImportError:
 logger = logging.getLogger(__name__)
 
 
+def test_connection(api_token: str, timeout: float = 10.0):
+    """Validate a Replicate token. Returns (ok: bool, message: str)."""
+    token = (api_token or "").strip()
+    if not token:
+        return False, "No token provided"
+    import httpx
+    try:
+        resp = httpx.get(
+            "https://api.replicate.com/v1/account",
+            headers={"Authorization": f"Bearer {token}"},
+            timeout=timeout,
+        )
+    except Exception as e:
+        return False, f"Request failed: {e}"
+    if resp.status_code == 200:
+        username = resp.json().get("username") or resp.json().get("name") or "ok"
+        return True, f"Connected as {username}"
+    if resp.status_code in (401, 403):
+        return False, "Invalid token (unauthorized)"
+    return False, f"HTTP {resp.status_code}"
+
+
 class ReplicateImageClient:
     """Replicate image generation client.
 
