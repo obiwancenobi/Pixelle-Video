@@ -593,7 +593,10 @@ class DigitalHumanPipelineUI(PipelineUI):
                             else:
                                 generated_text = await pixelle_video.llm(
                                     prompt=(
-                                        f"Write a short promotional script for the product \"{goods_title}\" suitable for a digital-human talking short video. "
+                                        f"为产品「{goods_title}」写一段适合数字人口播短视频的简短推广文案，"
+                                        "语气自然、有吸引力，控制在约80字以内，只输出文案本身。"
+                                        if get_language() == "zh_CN"
+                                        else f"Write a short promotional script for the product \"{goods_title}\" suitable for a digital-human talking short video. "
                                         "Keep it natural and engaging, under about 80 words, and output only the script text."
                                     ),
                                     temperature=0.7,
@@ -807,7 +810,10 @@ class DigitalHumanPipelineUI(PipelineUI):
                                     generated_image_url = media_result.url
                                     generated_text = await pixelle_video.llm(
                                         prompt=(
-                                            f"Write a short promotional script for the product \"{goods_title}\" suitable for a digital-human talking short video. "
+                                            f"为产品「{goods_title}」写一段适合数字人口播短视频的简短推广文案，"
+                                            "语气自然、有吸引力，控制在约80字以内，只输出文案本身。"
+                                            if get_language() == "zh_CN"
+                                            else f"Write a short promotional script for the product \"{goods_title}\" suitable for a digital-human talking short video. "
                                             "Keep it natural and engaging, under about 80 words, and output only the script text."
                                         ),
                                         temperature=0.7,
