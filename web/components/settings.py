@@ -300,6 +300,7 @@ def render_advanced_settings():
         dashscope_cfg = api_cfg.get("dashscope", {})
         ark_cfg = api_cfg.get("ark", {})
         kling_cfg = api_cfg.get("kling", {})
+        replicate_cfg = api_cfg.get("replicate", {})
         default_api_base_urls = {
             "openai": "https://api.openai.com/v1",
             "dashscope": "https://dashscope.aliyuncs.com/api/v1",
@@ -426,7 +427,28 @@ def render_advanced_settings():
                     type="password",
                     key="api_media_kling_secret_key",
                 )
-        
+
+                st.markdown("**Replicate**")
+                st.caption(
+                    "用法：将图像/视频模型名设为 replicate:<owner>/<model>，"
+                    "如 replicate:black-forest-labs/flux-1.1-pro。"
+                    if zh
+                    else "Usage: set the image/video model name to replicate:<owner>/<model>, "
+                    "e.g. replicate:black-forest-labs/flux-1.1-pro."
+                )
+                api_replicate_use_proxy = st.checkbox(
+                    "Replicate 启用代理" if zh else "Use proxy for Replicate",
+                    value=bool(replicate_cfg.get("use_proxy", False)),
+                    key="api_media_replicate_use_proxy",
+                )
+                api_replicate_token = st.text_input(
+                    "Replicate API Token",
+                    value=replicate_cfg.get("api_token", ""),
+                    type="password",
+                    placeholder="r8_...",
+                    key="api_media_replicate_token",
+                )
+
         # ====================================================================
         # Action Buttons (full width at bottom)
         # ====================================================================
@@ -479,7 +501,11 @@ def render_advanced_settings():
                         "secret_key": api_kling_secret_key or "",
                         "use_proxy": bool(api_kling_use_proxy),
                     })
-                    
+                    config_manager.set_api_provider_config("replicate", {
+                        "api_token": api_replicate_token or "",
+                        "use_proxy": bool(api_replicate_use_proxy),
+                    })
+
                     # Only save to file if LLM config is valid
                     if llm_api_key and llm_base_url and llm_model:
                         config_manager.save()
