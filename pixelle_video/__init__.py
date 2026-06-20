@@ -28,7 +28,7 @@ Usage:
     # Generate video with different pipelines
     # Standard pipeline (default)
     result = await pixelle_video.generate_video(
-        text="如何提高学习效率",
+        text="How to improve learning efficiency",
         n_scenes=5
     )
     

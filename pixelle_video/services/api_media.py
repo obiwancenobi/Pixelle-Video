@@ -621,16 +621,16 @@ class APIProviderMediaService:
             return prompt
 
         rewrite_instruction = f"""
-请将下面的视频生成提示词改写为更中性、安全、适合公开视频生成模型审核的画面描述。
+Rewrite the following video-generation prompt into a more neutral, safe scene description suitable for public video-generation model moderation.
 
-要求：
-1. 保留原本的积极含义、画面主题和视觉风格。
-2. 去掉可能触发审核的暴力、危险、恐惧、政治、成人、歧视、极端情绪、自伤、违法、攻击性表达。
-3. 不要提及“审核”“违规”“敏感词”等元信息。
-4. 只输出改写后的提示词，不要解释。
-5. 输出优先使用英文，画面描述要具体、平和、正向。
+Requirements:
+1. Preserve the original positive meaning, subject, and visual style.
+2. Remove anything that may trigger moderation: violence, danger, fear, politics, adult content, discrimination, extreme emotion, self-harm, illegal or aggressive expressions.
+3. Do not mention meta information such as "moderation", "violation", or "sensitive words".
+4. Output only the rewritten prompt, with no explanation.
+5. Output in English; keep the scene description concrete, calm, and positive.
 
-原提示词：
+Original prompt:
 {prompt}
 """.strip()
 

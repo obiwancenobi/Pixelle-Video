@@ -110,7 +110,7 @@ async def edge_tts(
     
     Example:
         audio_bytes = await edge_tts(
-            text="你好，世界！",
+            text="Hello, world!",
             voice="[Chinese] zh-CN Yunjian",
             rate="+20%"
         )

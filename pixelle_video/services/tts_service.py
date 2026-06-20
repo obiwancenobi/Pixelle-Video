@@ -39,7 +39,7 @@ class TTSService(ComfyBaseService):
         
         # Use specific workflow
         audio_path = await pixelle_video.tts(
-            text="你好，世界！",
+            text="Hello, world!",
             workflow="tts_edge.json"
         )
         
@@ -106,7 +106,7 @@ class TTSService(ComfyBaseService):
             
             # ComfyUI inference
             audio_path = await pixelle_video.tts(
-                text="你好，世界！",
+                text="Hello, world!",
                 inference_mode="comfyui",
                 workflow="runninghub/tts_edge.json"
             )
